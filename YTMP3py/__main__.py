@@ -1,9 +1,16 @@
 import YTsearchdownload
-cursor = YTsearchdownload.YTcursor("/Users/jgavin/Documents/ffmpeg", "/Users/jgavin/Desktop/YTMP3py/songs")
-link = cursor.searchYoutube("deez nuts", 5)
-cursor.downloadVideo(link, "audio")
-print(cursor.downloadLocation)
-"""
-downloadTo="/Volumes/DJG/MISC"
-ffmpegLocation="/Users/jgavin/Documents/ffmpeg"
-"""
+import os
+os.chdir(os.path.dirname(__file__))
+with open("settings.txt", 'r') as file:
+    fixBitRate: bool =      file.readline().split(':')[1].strip() == '1'
+    downloadLocation: str = file.readline().split(':')[1].strip()
+    ffmpegPath: str =       file.readline().split(':')[1].strip()
+
+
+args = {
+    "fixBitRate": fixBitRate,
+    "downloadLocation": downloadLocation,
+    "ffmpegPath": ffmpegPath
+}
+
+YTsearchdownload.mainLoop(args)

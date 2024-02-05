@@ -1,0 +1,3 @@
+fixBitRate: 1
+downloadLocation: /Users/jgavin/desktop
+ffmpegLocation: /Users/jgavin/Documents/ffmpeg
