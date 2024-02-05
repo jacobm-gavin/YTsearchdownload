@@ -6,9 +6,6 @@ from time import sleep
 from json import loads
 from requests import get
 
-downloadTo="/Volumes/DJG/NEW"
-
-ffmpegLocation="/Users/jgavin/Documents/ffmpeg"
 
 """
 class YTcursor:
@@ -72,58 +69,59 @@ class YTcursor:
             
             
 """
-fixRate = True #Fix bitrate, needed to use in SERATO DJ
 
 
 
-while True:
-    try:
-        print("Enter Search Term: ",end="")
-        searchTerm = input()
-        print("\n"*100)
-        videos = VideosSearch(searchTerm, limit = 5)
-        for i in range(5):
-            print(f"[{i}] - [{videos.result()['result'][i]['duration']}] "+videos.result()['result'][i]['title'])
-        toDownload = int(input("Enter A download Index: "))
+
+
+def mainLoop(args):
+    fixRate = bool(args["fixBitRate"])
+    downloadTo = args["downloadLocation"]
+    ffmpegPath = args["ffmpegPath"]
+    while True:
         try:
-            downloadLink = videos.result()['result'][toDownload]['link']
-        except:
-            print("Aborting...")
-            
+            print("Enter Search Term: ",end="")
+            searchTerm = input()
+            print("\n"*100)
+            videos = VideosSearch(searchTerm, limit = 5)
+            for i in range(5):
+                print(f"[{i}] - [{videos.result()['result'][i]['duration']}] "+videos.result()['result'][i]['title'])
+            toDownload = int(input("Enter A download Index: "))
+            try:
+                downloadLink = videos.result()['result'][toDownload]['link']
+            except:
+                print("Aborting...")
+                
+                continue
+            yt = YouTube(downloadLink)
+            video = yt.streams.filter(only_audio=True).first()
+
+            destination = downloadTo         ##CHANGE THIS LOCATION FOR PARTIES
+            if os.path.exists(downloadTo):
+                destination = downloadTo
+            ## TODO fix destination setting
+            print("[0] downloading...")
+            outfile = video.download(output_path=destination)
+            base, ext = os.path.splitext(outfile)
+            new_file = base + '.mp3'
+            os.rename(outfile, new_file)
+            if fixRate:
+                print("repairing audio")
+                bitFixedPath = "/".join(new_file.split("/")[:-1]) + "/[240k] "
+                bitFixedName = new_file.split("/")[-1]
+                command = f"{ffmpegPath} -i '{new_file}' -b:a 240k '{bitFixedPath}{bitFixedName}' -loglevel panic"
+                os.system(command)
+                os.system(f"rm '{new_file}'")
+                
+
+        except Exception as e:
+            print(f"[1] Exception occurred. Enter to continue")
+            print(e)
+            input()
             continue
-        yt = YouTube(downloadLink)
-        video = yt.streams.filter(only_audio=True).first()
+        print("\n"*100)
+        print(destination)
+        print(f"[0] {yt.title} DOWNLOADED")
+        #print("\n"*100)
 
-        destination = "/Users/jgavin/Desktop/DJG Backup"            ##CHANGE THIS LOCATION FOR PARTIES
-        if os.path.exists(downloadTo):
-            destination = downloadTo
-        ## TODO fix destination setting
-        print("[0] downloading...")
-        outfile = video.download(output_path=destination)
-        base, ext = os.path.splitext(outfile)
-        new_file = base + '.mp3'
-        os.rename(outfile, new_file)
-        if fixRate:
-            print("repairing audio")
-            for i in range(100):
-                print(f"[{i}%]     ", end="\r")
-                sleep(0.01)
-            print("Cleaning up")
-            bitFixedPath = "/".join(new_file.split("/")[:-1]) + "/[240k] "
-            bitFixedName = new_file.split("/")[-1]
-            command = f"/Users/jgavin/Documents/ffmpeg -i '{new_file}' -b:a 240k '{bitFixedPath}{bitFixedName}' -loglevel panic"
-            os.system(command)
-            os.system(f"rm '{new_file}'")
-            
-
-    except Exception as e:
-        print(f"[1] Exception occurred. Enter to continue")
-        print(e)
-        input()
-        continue
-    print("\n"*100)
-    print(destination)
-    print(f"[0] {yt.title} DOWNLOADED")
-    #print("\n"*100)
-
-print('[0] Process finished')
+    print('[0] Process finished')
